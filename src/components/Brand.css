@@ -1,0 +1,63 @@
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #9ed6ca, #4b9f91);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.26);
+  overflow: hidden;
+}
+
+.brand__mark span {
+  position: absolute;
+  width: 3px;
+  border-radius: 999px;
+  background: #fff;
+  transform: rotate(32deg);
+}
+
+.brand__mark span:nth-child(1) {
+  height: 17px;
+  left: 12px;
+  top: 13px;
+}
+
+.brand__mark span:nth-child(2) {
+  height: 24px;
+  left: 19px;
+  top: 8px;
+}
+
+.brand__mark span:nth-child(3) {
+  height: 15px;
+  left: 26px;
+  top: 10px;
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brand__text strong {
+  color: #fff;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+}
+
+.brand__text small {
+  color: rgba(232, 247, 243, 0.64);
+  font-size: 0.68rem;
+  margin-top: 1px;
+}
