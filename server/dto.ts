@@ -1,4 +1,12 @@
+import {
+  emptyAnamnesisContent,
+  emptySessionNoteContent,
+  type AnamnesisContent,
+  type AnamnesisStatus,
+  type SessionNoteContent,
+} from "../shared/clinical.js";
 import type { AppointmentModality, AppointmentStatus } from "./types.js";
+
 
 export interface UserRow {
   id: string;
@@ -99,3 +107,102 @@ export const mapAppointment = (row: AppointmentRow) => ({
     notificationConsent: row.patient_notification_consent === 1,
   },
 });
+
+export interface AnamnesisRow {
+  id: string;
+  patient_id: string;
+  status: AnamnesisStatus;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionNoteRow {
+  id: string;
+  patient_id: string;
+  appointment_id: string | null;
+  session_date: string;
+  template_id: string | null;
+  objective: string | null;
+  interventions: string | null;
+  response: string | null;
+  homework: string | null;
+  planning: string | null;
+  risk_alert: number;
+  created_at: string;
+  updated_at: string;
+  patient_name?: string;
+  appointment_starts_at?: string | null;
+}
+
+export interface ClinicalTemplateRow {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ConsultationRow extends AppointmentRow {
+  note_id?: string | null;
+  note_session_date?: string | null;
+}
+
+const parseContent = <T extends Record<string, string>>(raw: string, empty: () => T): T => {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return { ...empty(), ...(parsed as Partial<T>) } as T;
+    }
+  } catch {
+    // conteúdo inválido volta ao formulário em branco
+  }
+  return empty();
+};
+
+export const mapAnamnesis = (row: AnamnesisRow) => ({
+  id: row.id,
+  patientId: row.patient_id,
+  status: row.status,
+  content: parseContent<AnamnesisContent>(row.content, emptyAnamnesisContent),
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+});
+
+export const mapSessionNote = (row: SessionNoteRow) => ({
+  id: row.id,
+  patientId: row.patient_id,
+  appointmentId: row.appointment_id,
+  sessionDate: row.session_date,
+  templateId: row.template_id,
+  riskAlert: row.risk_alert === 1,
+  content: {
+    ...emptySessionNoteContent(),
+    objective: row.objective ?? "",
+    interventions: row.interventions ?? "",
+    response: row.response ?? "",
+    homework: row.homework ?? "",
+    planning: row.planning ?? "",
+  } satisfies SessionNoteContent,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  patientName: row.patient_name ?? null,
+  appointmentStartsAt: row.appointment_starts_at ?? null,
+});
+
+export const mapClinicalTemplate = (row: ClinicalTemplateRow) => ({
+  id: row.id,
+  name: row.name,
+  description: row.description,
+  category: row.category,
+  content: parseContent<SessionNoteContent>(row.content, emptySessionNoteContent),
+  createdAt: row.created_at,
+});
+
+export const mapConsultation = (row: ConsultationRow) => ({
+  ...mapAppointment(row),
+  noteId: row.note_id ?? null,
+  noteSessionDate: row.note_session_date ?? null,
+});
+

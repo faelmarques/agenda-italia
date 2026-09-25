@@ -1,3 +1,9 @@
+import type {
+  AnamnesisContent,
+  AnamnesisStatus,
+  SessionNoteContent,
+} from "../shared/clinical";
+
 export interface User {
   id: string;
   name: string;
@@ -96,3 +102,58 @@ export interface SettingsData {
     recipient: string | null;
   };
 }
+
+export interface Anamnesis {
+  id: string;
+  patientId: string;
+  status: AnamnesisStatus;
+  content: AnamnesisContent;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SessionNote {
+  id: string;
+  patientId: string;
+  appointmentId: string | null;
+  sessionDate: string;
+  templateId: string | null;
+  riskAlert: boolean;
+  content: SessionNoteContent;
+  createdAt: string;
+  updatedAt: string;
+  patientName: string | null;
+  appointmentStartsAt: string | null;
+}
+
+export interface ClinicalTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  content: SessionNoteContent;
+  createdAt: string;
+}
+
+export interface Consultation extends Appointment {
+  noteId: string | null;
+  noteSessionDate: string | null;
+}
+
+export interface ClinicalPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+export interface ConsultationsResponse {
+  items: Consultation[];
+  pagination: ClinicalPagination;
+}
+
+export interface SessionNotesResponse {
+  items: SessionNote[];
+  pagination: ClinicalPagination;
+}
+

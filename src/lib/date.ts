@@ -5,6 +5,7 @@ import {
   endOfWeek,
   format,
   isSameDay,
+  parseISO,
   startOfDay,
   startOfWeek,
 } from "date-fns";
@@ -44,6 +45,12 @@ export const formatLongDate = (date: Date | string): string =>
 
 export const formatShortDate = (date: Date | string): string =>
   format(typeof date === "string" ? new Date(date) : date, "dd/MM/yyyy");
+
+export const formatDateOnly = (value: string): string =>
+  format(parseISO(value), "dd/MM/yyyy");
+
+export const formatLongDateOnly = (value: string): string =>
+  format(parseISO(value), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
 
 export const formatTime = (date: Date | string): string =>
   format(typeof date === "string" ? new Date(date) : date, "HH:mm");

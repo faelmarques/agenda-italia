@@ -9,6 +9,7 @@ import { createMailService, type MailService } from "./email.js";
 import { errorHandler, notFoundHandler } from "./errors.js";
 import { createAppointmentsRouter } from "./routes/appointments.js";
 import { createAuthRouter } from "./routes/auth.js";
+import { createClinicalRouter } from "./routes/clinical.js";
 import { createDashboardRouter } from "./routes/dashboard.js";
 import { createPatientsRouter } from "./routes/patients.js";
 import { createSettingsRouter } from "./routes/settings.js";
@@ -56,6 +57,7 @@ export const createApp = (options: AppOptions = {}): Express => {
   );
 
   app.use("/api", requireAuth);
+  app.use("/api", createClinicalRouter(database));
   app.use("/api/patients", createPatientsRouter(database));
   app.use("/api/appointments", createAppointmentsRouter(database, mailer));
   app.use("/api/dashboard", createDashboardRouter(database));

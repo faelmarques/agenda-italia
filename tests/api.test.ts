@@ -155,3 +155,143 @@ describe("Lembretes automáticos", () => {
     database.close();
   });
 });
+
+describe("Documentação clínica", () => {
+  it("cobre anamnese, consultas, modelos e evolução", async () => {
+    const database = createDatabase(":memory:");
+    const app = createApp({ database, mailer: createMailer() });
+    const agent = request.agent(app);
+
+    await agent
+      .post("/api/auth/setup")
+      .send({
+        name: "Dra. Marina Costa",
+        email: "marina@example.com",
+        password: "senhasegura123",
+        clinicName: "Clinic Marina",
+      })
+      .expect(201);
+
+    const patient = (
+      await agent.post("/api/patients").send({ name: "Ana Souza" }).expect(201)
+    ).body.data.patient;
+
+    const templates = await agent.get("/api/clinical-templates").expect(200);
+    expect(templates.body.data.items.length).toBeGreaterThanOrEqual(5);
+    expect(templates.body.data.items[0]).toMatchObject({
+      id: expect.any(String),
+      content: expect.objectContaining({ objective: expect.any(String) }),
+    });
+
+    const missingAnamnesis = await agent
+      .get(`/api/anamnesis/${randomUUID()}`)
+      .expect(404);
+    expect(missingAnamnesis.body.error.code).toBe("PATIENT_NOT_FOUND");
+
+    const emptyAnamnesis = await agent.get(`/api/anamnesis/${patient.id}`).expect(200);
+    expect(emptyAnamnesis.body.data.anamnesis).toBeNull();
+
+    const savedAnamnesis = await agent
+      .put(`/api/anamnesis/${patient.id}`)
+      .send({
+        status: "completed",
+        content: { queixaPrincipal: "Insônia há três meses", risco: "Sem ideação relatada" },
+      })
+      .expect(200);
+
+    expect(savedAnamnesis.body.data.anamnesis).toMatchObject({ status: "completed" });
+    expect(savedAnamnesis.body.data.anamnesis.content).toMatchObject({
+      queixaPrincipal: "Insônia há três meses",
+      risco: "Sem ideação relatada",
+      historicoFamiliar: "",
+    });
+
+    const appointment = (
+      await agent
+        .post("/api/appointments")
+        .send({
+          patientId: patient.id,
+          startsAt: "2099-06-01T11:00:00-03:00",
+          endsAt: "2099-06-01T11:50:00-03:00",
+          type: "Sessão individual",
+          modality: "video",
+          sendConfirmation: false,
+        })
+        .expect(201)
+    ).body.data.appointment;
+
+    const pendingConsultation = await agent.get("/api/consultations?hasNote=no").expect(200);
+    expect(pendingConsultation.body.data.items).toHaveLength(1);
+    expect(pendingConsultation.body.data.items[0]).toMatchObject({
+      id: appointment.id,
+      noteId: null,
+      patient: { name: "Ana Souza" },
+    });
+
+    const noteResponse = await agent
+      .post("/api/session-notes")
+      .send({
+        patientId: patient.id,
+        appointmentId: appointment.id,
+        sessionDate: "1999-06-01",
+        templateId: "tcc",
+        content: { objective: "Revisão da semana", interventions: "Reestruturação cognitiva" },
+        riskAlert: true,
+      })
+      .expect(201);
+
+    expect(noteResponse.body.data.note).toMatchObject({
+      riskAlert: true,
+      templateId: "tcc",
+      sessionDate: "1999-06-01",
+      content: expect.objectContaining({
+        objective: "Revisão da semana",
+        planning: "",
+      }),
+    });
+
+    const duplicate = await agent
+      .post("/api/session-notes")
+      .send({
+        patientId: patient.id,
+        appointmentId: appointment.id,
+        sessionDate: "1999-06-01",
+        content: { objective: "Registro repetido" },
+      })
+      .expect(409);
+    expect(duplicate.body.error.code).toBe("APPOINTMENT_NOTE_EXISTS");
+
+    const completedConsultation = await agent.get("/api/consultations?hasNote=yes").expect(200);
+    expect(completedConsultation.body.data.items[0]).toMatchObject({
+      noteId: noteResponse.body.data.note.id,
+      noteSessionDate: "1999-06-01",
+    });
+
+    const notes = await agent.get(`/api/session-notes?patientId=${patient.id}`).expect(200);
+    expect(notes.body.data.items).toHaveLength(1);
+
+    const updated = await agent
+      .put(`/api/session-notes/${noteResponse.body.data.note.id}`)
+      .send({ content: { planning: "Revisar higiene do sono" }, riskAlert: false })
+      .expect(200);
+
+    expect(updated.body.data.note).toMatchObject({ riskAlert: false });
+    expect(updated.body.data.note.content).toMatchObject({
+      objective: "Revisão da semana",
+      planning: "Revisar higiene do sono",
+    });
+
+    await agent
+      .delete(`/api/session-notes/${noteResponse.body.data.note.id}`)
+      .expect(204);
+
+    const afterDelete = await agent
+      .get(`/api/session-notes?patientId=${patient.id}`)
+      .expect(200);
+    expect(afterDelete.body.data.items).toHaveLength(0);
+
+    await agent.post("/api/auth/logout").expect(204);
+    await agent.get("/api/consultations").expect(401);
+    database.close();
+  });
+});

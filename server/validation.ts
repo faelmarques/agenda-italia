@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  anamnesisFieldKeys,
+  sessionNoteFieldKeys,
+  type AnamnesisContent,
+  type SessionNoteContent,
+} from "../shared/clinical.js";
 import { appointmentModalities, appointmentStatuses } from "./types.js";
 
 const optionalText = (maximum: number) =>
@@ -6,6 +12,8 @@ const optionalText = (maximum: number) =>
     (value) => (typeof value === "string" && value.trim() === "" ? null : value),
     z.string().trim().max(maximum).nullable().optional(),
   );
+
+const textBlock = (maximum: number) => z.string().trim().max(maximum).default("");
 
 export const setupSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome.").max(100),
@@ -124,3 +132,61 @@ export const dateRangeSchema = z.object({
   from: z.iso.datetime({ offset: true }),
   to: z.iso.datetime({ offset: true }),
 });
+
+export const anamnesisContentSchema = z.object(
+  Object.fromEntries(anamnesisFieldKeys.map((key) => [key, textBlock(8000)])),
+);
+
+export const updateAnamnesisSchema = z.object({
+  status: z.enum(["draft", "completed"]).default("draft"),
+  content: anamnesisContentSchema,
+});
+
+export const sessionNoteContentSchema = z.object(
+  Object.fromEntries(sessionNoteFieldKeys.map((key) => [key, textBlock(4000)])),
+);
+
+export const createSessionNoteSchema = z.object({
+  patientId: z.uuid("Paciente inválido."),
+  appointmentId: z.uuid().nullable().optional(),
+  sessionDate: z.iso.date("Informe a data da sessão."),
+  templateId: z.string().trim().min(1).max(64).nullable().optional(),
+  content: sessionNoteContentSchema,
+  riskAlert: z.boolean().default(false),
+});
+
+export const updateSessionNoteSchema = z
+  .object({
+    appointmentId: z.uuid().nullable().optional(),
+    sessionDate: z.iso.date("Informe a data da sessão.").optional(),
+    templateId: z.string().trim().min(1).max(64).nullable().optional(),
+    content: z.record(z.string(), z.string().trim().max(4000)).optional(),
+    riskAlert: z.boolean().optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, "Informe ao menos um campo.");
+
+
+export const listConsultationsSchema = z.object({
+  search: z.string().trim().max(100).default(""),
+  from: z.iso.datetime({ offset: true }).optional(),
+  to: z.iso.datetime({ offset: true }).optional(),
+  patientId: z.uuid().optional(),
+  status: z.enum([...appointmentStatuses, "pending", "all"]).default("all"),
+  hasNote: z.enum(["yes", "no", "all"]).default("all"),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const listSessionNotesSchema = z.object({
+  patientId: z.uuid(),
+  appointmentId: z.uuid().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const parseAnamnesisContent = (value: unknown): AnamnesisContent =>
+  anamnesisContentSchema.parse(value) as AnamnesisContent;
+
+export const parseSessionNoteContent = (value: unknown): SessionNoteContent =>
+  sessionNoteContentSchema.parse(value) as SessionNoteContent;
+

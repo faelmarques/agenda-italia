@@ -1,10 +1,12 @@
 import { useDeferredValue, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Archive,
   ArchiveRestore,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Mail,
   MessageCircle,
   Pencil,
@@ -173,6 +175,14 @@ export const PatientsPage = () => {
                     </td>
                     <td>
                       <div className="table-actions">
+                        <Link
+                          className="icon-button"
+                          to={`/prontuario/${patient.id}`}
+                          aria-label={`Abrir prontuário de ${patient.name}`}
+                          title="Prontuário"
+                        >
+                          <ClipboardList size={17} />
+                        </Link>
                         {(patient.phone || patient.email) ? (
                           <button
                             className="icon-button"

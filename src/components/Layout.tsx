@@ -2,9 +2,11 @@ import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import {
   CalendarDays,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   Menu,
+  NotebookPen,
   Settings,
   Users,
   X,
@@ -18,6 +20,8 @@ const navItems = [
   { to: "/", label: "Início", icon: LayoutDashboard, end: true },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/pacientes", label: "Pacientes", icon: Users },
+  { to: "/consultas", label: "Consultas", icon: NotebookPen },
+  { to: "/prontuario", label: "Prontuário", icon: ClipboardList },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 

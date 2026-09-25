@@ -5,6 +5,9 @@ import { AppLayout } from "./components/Layout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { CalendarPage } from "./pages/CalendarPage";
 import { PatientsPage } from "./pages/PatientsPage";
+import { ConsultationsPage } from "./pages/ConsultationsPage";
+import { ProntuarioPage } from "./pages/ProntuarioPage";
+import { PatientRecordPage } from "./pages/PatientRecordPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SetupPage } from "./pages/SetupPage";
@@ -26,6 +29,9 @@ export const App = () => (
               <Route index element={<DashboardPage />} />
               <Route path="agenda" element={<CalendarPage />} />
               <Route path="pacientes" element={<PatientsPage />} />
+              <Route path="consultas" element={<ConsultationsPage />} />
+              <Route path="prontuario" element={<ProntuarioPage />} />
+              <Route path="prontuario/:patientId" element={<PatientRecordPage />} />
               <Route path="configuracoes" element={<SettingsPage />} />
             </Route>
           </Route>
